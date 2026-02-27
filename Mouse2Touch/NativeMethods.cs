@@ -26,6 +26,10 @@ namespace Mouse2Touch {
         public extern static bool GetCursorPos(out Point p);
         [DllImport("User32")]
         public extern static int ShowCursor(bool bShow);
+        [DllImport("User32")]
+        public extern static IntPtr WindowFromPoint(int x, int y);
+        [DllImport("User32")]
+        public extern static IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
         #endregion
 
 

@@ -138,6 +138,11 @@ namespace Gma.UserActivityMonitor {
                         clickCount = 1;
                         break;
 
+                    case WM_MBUTTONDBLCLK:
+                        button = MouseButtons.Middle;
+                        clickCount = 2;
+                        break;
+
                     // Side mouse button
                     case WM_XBUTTONDOWN:
                         mouseDown = true;
@@ -215,20 +220,19 @@ namespace Gma.UserActivityMonitor {
                     s_MouseWheel.Invoke(null, e);
                 }
 
-                //If someone listens to move and there was a change in coordinates raise move event
-                /*if ((s_MouseMove != null || s_MouseMoveExt != null) && (m_OldX != mouseHookStruct.Point.X || m_OldY != mouseHookStruct.Point.Y)) {
-                    m_OldX = mouseHookStruct.Point.X;
-                    m_OldY = mouseHookStruct.Point.Y;
-                    if (s_MouseMove != null) {
-                        //System.Console.WriteLine("mmm");
-                        s_MouseMove.Invoke(null, e);
-                    }
+                 //If someone listens to move and there was a change in coordinates raise move event
+                 if ((s_MouseMove != null || s_MouseMoveExt != null) && (m_OldX != mouseHookStruct.Point.X || m_OldY != mouseHookStruct.Point.Y)) {
+                     m_OldX = mouseHookStruct.Point.X;
+                     m_OldY = mouseHookStruct.Point.Y;
+                     if (s_MouseMove != null) {
+                         s_MouseMove.Invoke(null, e);
+                     }
 
-                    if (s_MouseMoveExt != null) {
-                        s_MouseMoveExt.Invoke(null, e);
-                    }
+                     if (s_MouseMoveExt != null) {
+                         s_MouseMoveExt.Invoke(null, e);
+                     }
 
-                } */
+                 }
 
                 if (e.Handled) {
                     return -1;
@@ -255,8 +259,13 @@ namespace Gma.UserActivityMonitor {
                         /*} else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseLeft && button == MouseButtons.Left && Mouse2Touch.Form1.bool_m_handled) {
                             return -1;*/
 
-                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseMiddle && button == MouseButtons.Middle) {
-                        return -1;
+                     } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseLeft && button == MouseButtons.Left) {
+                         // Let clicks through if they land on our own window (e.g. the settings UI)
+                         var hwndClick = Mouse2Touch.NativeMethods.WindowFromPoint(mouseHookStruct.Point.X, mouseHookStruct.Point.Y);
+                         var rootHwnd = Mouse2Touch.NativeMethods.GetAncestor(hwndClick, 2 /* GA_ROOT */);
+                         if (rootHwnd != Mouse2Touch.Form1.MainFormHandle) {
+                             return -1;
+                         }
 
                     }
                 }

@@ -181,22 +181,91 @@
             margin-bottom: 15px;
         }
 
-        .text_ad_box {
-            margin: 5px 15px 15px 15px;
-            box-sizing: border-box;
+
+        .modal_bg {
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: none;
+            z-index: 9999;
+        }
+
+        .modal_box {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border-radius: 6px;
+            width: 320px;
+            box-shadow: 0px 5px 18px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            z-index: 10000;
+        }
+
+        .modal_title {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgb(231, 231, 231);
+            font-size: 16px;
+        }
+
+        .modal_body {
+            padding: 12px 15px;
+            font-size: 14px;
+            color: rgb(95, 99, 104);
+            line-height: 20px;
+        }
+
+        .modal_value {
+            margin-top: 10px;
+            padding: 8px 10px;
+            background-color: rgb(241, 243, 244);
+            border: 1px solid rgb(214, 214, 214);
+            border-radius: 4px;
+            color: #000;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .modal_btns {
+            padding: 10px 15px;
+            border-top: 1px solid rgb(231, 231, 231);
+            text-align: right;
+        }
+
+        .modal_btns button {
+            display: inline-block;
+            margin-right: 0;
+            margin-left: 8px;
+            min-width: 80px;
+            height: 30px;
+            background-color: rgb(255, 255, 255);
+            border: 1px solid rgb(214, 214, 214);
+            border-radius: 4px;
+            font-size: 14px;
+            color: rgb(26, 115, 232);
+            cursor: pointer;
         }
 
 
-        #text_ad {
-            height: 110px;
-            outline: none;
-            box-sizing: border-box;
+        .toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 6px;
+            padding: 8px 12px;
             font-size: 14px;
-            background-color: rgb(241, 243, 244);
-            border: 1px solid rgb(214, 214, 214);
-            padding: 5px;
-            width: 100%;
-            display: block;
+            opacity: 0;
+            display: none;
+            transition: opacity 0.2s;
+            z-index: 10002;
+            pointer-events: none;
         }
     </style>
 
@@ -210,11 +279,35 @@
         }
 
         var net = window.external;
-        var touch_speed = 1;
-        var Mtype = 'm_r_2'; // none, m_b1, m_l, m_mm, m_r, m_r_2
-        var ad_list = '3D/blender/Maya/Unreal/Photoshop'.replace(/[/]/ig, '\n'); // Exclusion list
-        var lang = 'en';
+        var Mtype = 'kb'; // none, m_b1, m_l, m_r, m_r_2, kb
+        var kb_shortcut = 'Ctrl+Alt+T';
         var bool_save = false;
+
+        var kb_popup_open = false;
+        var kb_shortcut_pending = '';
+
+        var toast_timer = null;
+        function show_toast(msg) {
+            var el = getId('toast');
+            if (!el) return;
+
+            el.innerText = msg;
+            el.style.display = 'block';
+
+            // Force reflow so opacity transition applies
+            el.offsetHeight;
+            el.style.opacity = '1';
+
+            if (toast_timer) {
+                clearTimeout(toast_timer);
+            }
+            toast_timer = setTimeout(function () {
+                el.style.opacity = '0';
+                setTimeout(function () {
+                    el.style.display = 'none';
+                }, 250);
+            }, 900);
+        }
 
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -224,19 +317,19 @@
             if (s_json != '') {
                 try {
                     var json = JSON.parse(s_json);
-                    touch_speed = json['touch_speed'];
                     Mtype = json['Mtype'];
-                    ad_list = decodeURIComponent(json['ad_list']);
-                    lang = json['lang'];
+                    if (json['kb_shortcut']) {
+                        kb_shortcut = json['kb_shortcut'];
+                    }
                 } catch (e) { }
             }
 
-            net.set_touch_speed(touch_speed);
             net.set_Mtype(Mtype);
-            net.set_ad(ad_list);
+            try {
+                net.set_kb_shortcut(kb_shortcut);
+            } catch (e) { }
 
-            getId('text_touch_speed').value = touch_speed;
-            getId('text_ad').value = ad_list;
+            getId('text_kb_shortcut').value = kb_shortcut;
 
             if (Mtype == 'none') {
                 getId('c_1_r1').checked = true;
@@ -244,14 +337,14 @@
             } else if (Mtype == 'm_b1') {
                 getId('c_1_r2').checked = true;
 
-            } else if (Mtype == 'm_mm') {
-                getId('c_1_r3').checked = true;
-
             } else if (Mtype == 'm_r') {
                 getId('c_1_r4').checked = true;
 
             } else if (Mtype == 'm_r_2') {
                 getId('c_1_r5').checked = true;
+
+            } else if (Mtype == 'kb') {
+                getId('c_1_r6').checked = true;
 
             }
 
@@ -259,12 +352,6 @@
 
         });
 
-        function set_touch_speed() {
-            var t = getId('text_touch_speed').value;
-            touch_speed = t;
-            net.set_touch_speed(t);
-            save_config();
-        }
         function set_Mtype(x) {
             Mtype = x;
             net.set_Mtype(x);
@@ -273,11 +360,81 @@
         function hide_window() {
             net.hide_window();
         }
-        function set_ad() {
-            var t = getId('text_ad').value;
-            ad_list = t;
-            net.set_ad(t);
-            save_config();
+
+
+        function keyCodeToString(code) {
+            if (code >= 65 && code <= 90) {
+                return String.fromCharCode(code);
+            }
+            if (code >= 48 && code <= 57) {
+                return String.fromCharCode(code);
+            }
+            if (code >= 112 && code <= 123) {
+                return 'F' + (code - 111);
+            }
+
+            if (code == 27) return 'Esc';
+            if (code == 32) return 'Space';
+            if (code == 13) return 'Enter';
+            if (code == 9) return 'Tab';
+
+            if (code == 37) return 'Left';
+            if (code == 38) return 'Up';
+            if (code == 39) return 'Right';
+            if (code == 40) return 'Down';
+
+            if (code == 45) return 'Insert';
+            if (code == 46) return 'Delete';
+            if (code == 36) return 'Home';
+            if (code == 35) return 'End';
+            if (code == 33) return 'PageUp';
+            if (code == 34) return 'PageDown';
+
+            return '';
+        }
+
+        function buildShortcutString(e) {
+            // Ignore modifier-only
+            if (e.keyCode == 16 || e.keyCode == 17 || e.keyCode == 18) {
+                return '';
+            }
+
+            var k = keyCodeToString(e.keyCode);
+            if (k == '') {
+                return '';
+            }
+
+            var parts = [];
+            if (e.ctrlKey) parts.push('Ctrl');
+            if (e.altKey) parts.push('Alt');
+            if (e.shiftKey) parts.push('Shift');
+            parts.push(k);
+            return parts.join('+');
+        }
+
+        function open_kb_shortcut_popup() {
+            kb_popup_open = true;
+            kb_shortcut_pending = kb_shortcut;
+            getId('kb_shortcut_value').innerText = kb_shortcut_pending;
+            getId('kb_shortcut_modal').style.display = 'block';
+        }
+
+        function close_kb_shortcut_popup() {
+            kb_popup_open = false;
+            kb_shortcut_pending = '';
+            getId('kb_shortcut_modal').style.display = 'none';
+        }
+
+        function ok_kb_shortcut_popup() {
+            if (kb_shortcut_pending != '') {
+                kb_shortcut = kb_shortcut_pending;
+                getId('text_kb_shortcut').value = kb_shortcut;
+                try {
+                    net.set_kb_shortcut(kb_shortcut);
+                } catch (e) { }
+                save_config();
+            }
+            close_kb_shortcut_popup();
         }
 
 
@@ -290,13 +447,40 @@
 
             var obj_json = {
                 Mtype: Mtype,
-                touch_speed: touch_speed,
-                ad_list: encodeURIComponent(ad_list),
-                lang: lang
+                kb_shortcut: kb_shortcut
             };
             var s = JSON.stringify(obj_json);
             net.set_config(s);
         }
+
+
+        document.addEventListener('keydown', function (e) {
+            if (!kb_popup_open) {
+                return;
+            }
+
+            // Esc closes without saving
+            if (e.keyCode == 27) {
+                close_kb_shortcut_popup();
+                if (e.preventDefault) e.preventDefault();
+                return false;
+            }
+
+            // Enter = OK
+            if (e.keyCode == 13) {
+                ok_kb_shortcut_popup();
+                if (e.preventDefault) e.preventDefault();
+                return false;
+            }
+
+            var sc = buildShortcutString(e);
+            if (sc != '') {
+                kb_shortcut_pending = sc;
+                getId('kb_shortcut_value').innerText = kb_shortcut_pending;
+                if (e.preventDefault) e.preventDefault();
+                return false;
+            }
+        }, true);
 
 
         function open_github() {
@@ -308,6 +492,21 @@
 </head>
 
 <body>
+
+    <div class="modal_bg" id="kb_shortcut_modal" onclick="close_kb_shortcut_popup()">
+        <div class="modal_box" onclick="event.cancelBubble=true;">
+            <div class="modal_title">Set keyboard shortcut</div>
+            <div class="modal_body">
+                Press the shortcut now.<br>
+                Press <b>Enter</b> to confirm or <b>Esc</b> to cancel.
+                <div class="modal_value" id="kb_shortcut_value"></div>
+            </div>
+            <div class="modal_btns">
+                <button onclick="close_kb_shortcut_popup()">Cancel</button>
+                <button onclick="ok_kb_shortcut_popup()">OK</button>
+            </div>
+        </div>
+    </div>
 
 
 
@@ -325,23 +524,17 @@
 
             <div class="radio_item">
                 <input type="radio" id="c_1_r2" name="c_1">
-                <label for="c_1_r2" onclick="set_Mtype('m_b1')">Mouse side button -> Touch</label>
-            </div>
-
-            <div class="radio_item">
-                <input type="radio" id="c_1_r3" name="c_1">
-                <label for="c_1_r3" onclick="set_Mtype('m_mm')">Middle mouse button -> Touch</label>
-            </div>
-
-            <!-- This option has an unresolved bug -->
-            <div class="radio_item" style="display:none">
-                <input type="radio" id="c_1_r4" name="c_1">
-                <label for="c_1_r4" onclick="set_Mtype('m_r')">Right mouse button -> Touch (Long press to open Context Menu)</label>
+                <label for="c_1_r2" onclick="set_Mtype('m_b1')">Mouse side button -> Touch + Swipe</label>
             </div>
 
             <div class="radio_item">
                 <input type="radio" id="c_1_r5" name="c_1">
-                <label for="c_1_r5" onclick="set_Mtype('m_r_2')">Right mouse button -> Touch (Click in place to open Context Menu)</label>
+                <label for="c_1_r5" onclick="set_Mtype('m_r_2')">Right mouse button -> Swipe (Click to open Context Menu)</label>
+            </div>
+
+            <div class="radio_item">
+                <input type="radio" id="c_1_r6" name="c_1">
+                <label for="c_1_r6" onclick="set_Mtype('kb')">Keyboard shortcut -> Toggle left mouse button -> Touch + Swipe</label>
             </div>
         </div>
 
@@ -351,11 +544,11 @@
         <div class="card_box">
             <div class="card_item">
                 <div class="card_l">
-                    <div class="card_l_title">Touch speed</div>
-                    <div class="card_l_txt">Allowable range 1.0 ~ 5.0 (multiple)</div>
+                    <div class="card_l_title">Keyboard shortcut</div>
+                    <div class="card_l_txt">Used in "Keyboard shortcut" mode (toggle)</div>
                 </div>
                 <div class="card_r">
-                    <input type="text" id="text_touch_speed" onkeyup="set_touch_speed()">
+                    <input type="text" id="text_kb_shortcut" style="width:160px" readonly onclick="open_kb_shortcut_popup()">
                 </div>
             </div>
 
@@ -369,22 +562,7 @@
                 </div>
             </div>
 
-            <div class="card_item">
-
-                <div class="card_l_title">Exclusion list</div>
-                <div class="card_l_txt card_full">
-                    When you use these programs, Mouse2Touch will stop working. <br>
-                    Just enter part of the name. <br>
-                    One line represents one entry. <br>
-                    Case-insensitive.
-                </div>
-                <div class="text_ad_box">
-                    <textarea id="text_ad" name="" cols="30" rows="10" onfocusout="set_ad()"></textarea>
-                </div>
-
             </div>
-
-        </div>
 
 
 
@@ -454,19 +632,12 @@
                         <div style="height:15px"></div>
                         Because the mouse is also moving during the touch process, this will cause some few programs
                         to be unable to drag in the touch mode. <br>
-                        ex: Office 2016 OneNote
                     </div>
                 </div>
 
             </div>
 
         </div>
-
-
-        <div class="card_title">
-            <div style="height:30px"></div>
-        </div>
-
 
         <div style="height:60px"></div>
     </div>

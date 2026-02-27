@@ -12,7 +12,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Input;
 
 namespace Mouse2Touch {
     public partial class Form1 : Form {
@@ -22,24 +21,37 @@ namespace Mouse2Touch {
         }
 
 
-        public static bool bool_stop = false; // Focused window is in exclusion list, temporarily disable touch
+        public static bool bool_stop = false;
         public static bool bool_m_handled = true; // Intercept original signal when right-clicking
-        public static Mtype mtype = Mtype.MouseSideButton; // Operation type
+        public static Mtype mtype = Mtype.Keyboard; // Operation type
+        public static bool bool_keyboard_touch = false; // Keyboard toggle: when true, left button acts as touch
+        public static Mtype mtype_before_keyboard_touch = Mtype.Keyboard;
+        public static IntPtr MainFormHandle = IntPtr.Zero;
 
         private System.Windows.Forms.NotifyIcon nIcon = new System.Windows.Forms.NotifyIcon(); // System tray icon
 
         bool bool_exe_run = true; // Whether the program is running
         bool bool_down = false;
 
+        int mouse_pos_x = 0;
+        int mouse_pos_y = 0;
+        int mouse_pos_tick = 0;
+
         bool bool_down_b1 = false; // Side button pressed
         bool bool_down_ml = false; // Left mouse button pressed
         bool bool_down_mr = false; // Right mouse button pressed
-        bool bool_down_mm = false; // Middle mouse button pressed
+
+        bool kb_ctrl = false;
+        bool kb_alt = false;
+        bool kb_shift = false;
+
+        bool kb_shortcut_ctrl = false;
+        bool kb_shortcut_alt = false;
+        bool kb_shortcut_shift = false;
+        Keys kb_shortcut_key = Keys.None;
+        bool kb_shortcut_down = false;
 
         bool bool_down_mr_moved = false; // Right button pressed and movement has been triggered
-        float f_touch_speed = 1; // Touch speed
-
-        List<String> ar_ad = new List<String>(); // Exclusion list
 
         // Touch simulation
         Point pp = new Point(); // Last moved position (to determine move distance)
@@ -47,19 +59,38 @@ namespace Mouse2Touch {
         PointerTouchInfo contact;
         PointerFlags oFlags;
 
+        private OsdForm osd;
+
+
+        private void ShowOsd(String text, bool isOn) {
+            try {
+                if (this.IsHandleCreated == false) {
+                    return;
+                }
+
+                this.BeginInvoke((Action)(() => {
+                    try {
+                        if (osd == null || osd.IsDisposed) {
+                            osd = new OsdForm();
+                        }
+
+                        var b = Screen.FromPoint(Cursor.Position).Bounds;
+                        osd.ShowMessage(text, b, isOn);
+                    } catch { }
+                }));
+            } catch { }
+        }
 
 
         /// <summary>
         /// Operation type
         /// </summary>
         public enum Mtype {
-            //stop = -1,
             none = 0,
             MouseSideButton = 1,
             MouseLeft = 2,
             MouseRight = 3, // Long press right button to open context menu
             MouseRight2 = 4, // Click in place to open context menu
-            MouseMiddle = 5,
             Keyboard = 6
         }
 
@@ -103,25 +134,7 @@ namespace Mouse2Touch {
             }
 
             TouchInjector.InitializeTouchInjection(); // Initialize touch API
-
-
-            //
-            var tim = new System.Windows.Forms.Timer();
-            tim.Interval = 200;
-            tim.Tick += (sender, e) => {
-
-                String gn = GetWindowsName.GetName(); // Get the name of the currently focused window
-
-                // Compare with the exclusion list
-                foreach (var item in ar_ad) {
-                    if (gn.IndexOf(item, StringComparison.CurrentCultureIgnoreCase) > -1) {
-                        bool_stop = true;
-                        return;
-                    }
-                }
-                bool_stop = false;
-            };
-            tim.Start();
+            MainFormHandle = this.Handle;
 
 
 
@@ -166,20 +179,13 @@ namespace Mouse2Touch {
                                     if (bool_down_mr_moved) {
 
                                         // Touch simulation - move
-                                        int nMoveIntervalX = (int)((p2.X - pp.X) * f_touch_speed);
-                                        int nMoveIntervalY = (int)((p2.Y - pp.Y) * f_touch_speed);
-                                contact.Move(nMoveIntervalX, nMoveIntervalY);
-                                oFlags = PointerFlags.INRANGE | PointerFlags.INCONTACT | PointerFlags.UPDATE;
-                                contact.PointerInfo.PointerFlags = oFlags;
-                                TouchInjector.InjectTouchInput(1, new[] { contact });
-
-                                // Make the mouse follow the touch position
-                                if (f_touch_speed != 1) {
-                                    NativeMethods.SetCursorPos(pp.X + nMoveIntervalX, pp.Y + nMoveIntervalY);
-                                    p2 = getPos();
-                                }
-
-                                pp = p2;
+                                                        int nMoveIntervalX = p2.X - pp.X;
+                                                        int nMoveIntervalY = p2.Y - pp.Y;
+                                                contact.Move(nMoveIntervalX, nMoveIntervalY);
+                                                oFlags = PointerFlags.INRANGE | PointerFlags.INCONTACT | PointerFlags.UPDATE;
+                                                contact.PointerInfo.PointerFlags = oFlags;
+                                                TouchInjector.InjectTouchInput(1, new[] { contact });
+                                                pp = p2;
 
                                 if (overd_sc(pp)) { // Auto-stop touch when exceeding screen bounds
                                     upFull();
@@ -203,7 +209,7 @@ namespace Mouse2Touch {
 
                     } else {
 
-                        bool bool_d = bool_down_b1 || bool_down_ml || bool_down_mr || bool_down_mm;
+                        bool bool_d = bool_down_b1 || bool_down_ml || bool_down_mr;
 
                         // Touch Down Simulate
                         if ((bool_down == false) && bool_d) {
@@ -246,21 +252,14 @@ namespace Mouse2Touch {
                         if (bool_down) {
 
                             var p2 = getPos();
-                            int nMoveIntervalX = (int)((p2.X - pp.X) * f_touch_speed);
-                            int nMoveIntervalY = (int)((p2.Y - pp.Y) * f_touch_speed);
+                            int nMoveIntervalX = p2.X - pp.X;
+                            int nMoveIntervalY = p2.Y - pp.Y;
 
                             // Touch simulation - move
                             contact.Move(nMoveIntervalX, nMoveIntervalY);
                             oFlags = PointerFlags.INRANGE | PointerFlags.INCONTACT | PointerFlags.UPDATE;
                             contact.PointerInfo.PointerFlags = oFlags;
                             TouchInjector.InjectTouchInput(1, new[] { contact });
-
-                            // Make the mouse follow the touch position
-                            if (f_touch_speed != 1) {
-                                NativeMethods.SetCursorPos(pp.X + nMoveIntervalX, pp.Y + nMoveIntervalY);
-                                p2 = getPos();
-                            }
-
                             pp = p2;
                             if (overd_sc(pp)) { // Auto-stop touch when exceeding screen bounds
                                 upFull();
@@ -281,7 +280,14 @@ namespace Mouse2Touch {
 
             HookManager.MouseDown += HookManager_MouseDown;
             HookManager.MouseUp += HookManager_MouseUp;
-            //HookManager.MouseMove += HookManager_MouseMove;
+            HookManager.MouseMove += HookManager_MouseMove;
+            HookManager.KeyDown += HookManager_KeyDown;
+            HookManager.KeyUp += HookManager_KeyUp;
+
+            var p0 = System.Windows.Forms.Cursor.Position;
+            mouse_pos_x = p0.X;
+            mouse_pos_y = p0.Y;
+            mouse_pos_tick = Environment.TickCount;
 
             this.FormClosing += Form1_FormClosing;
             init_nIcon();
@@ -300,6 +306,24 @@ namespace Mouse2Touch {
             bool_exe_run = false;
             HookManager.MouseDown -= HookManager_MouseDown;
             HookManager.MouseUp -= HookManager_MouseUp;
+            HookManager.MouseMove -= HookManager_MouseMove;
+            HookManager.KeyDown -= HookManager_KeyDown;
+            HookManager.KeyUp -= HookManager_KeyUp;
+
+            try {
+                if (osd != null) {
+                    osd.Close();
+                    osd.Dispose();
+                    osd = null;
+                }
+            } catch { }
+        }
+
+
+        private void HookManager_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e) {
+            mouse_pos_x = e.X;
+            mouse_pos_y = e.Y;
+            mouse_pos_tick = Environment.TickCount;
         }
 
 
@@ -322,62 +346,65 @@ namespace Mouse2Touch {
         }
 
 
-        /// <summary>
-        /// Set touch speed
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        public String set_touch_speed(String t) {
-            try {
-                f_touch_speed = float.Parse(t);
-                if (f_touch_speed < 1) { f_touch_speed = 1f; }
-                if (f_touch_speed > 5) { f_touch_speed = 5; }
-                //System.Console.WriteLine(t);
-                return "true";
-            } catch (Exception) {
-                f_touch_speed = 1;
-                return "false";
-            }
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
         public String set_Mtype(String t) {
+            if (bool_keyboard_touch) {
+                ShowOsd("Touch mode OFF", false);
+            }
+            bool_keyboard_touch = false;
+            kb_shortcut_down = false;
+
             if (t == "none") { mtype = Mtype.none; return "true"; }
             if (t == "m_b1") { mtype = Mtype.MouseSideButton; return "true"; }
             if (t == "m_l") { mtype = Mtype.MouseLeft; return "true"; }
-            if (t == "m_mm") { mtype = Mtype.MouseMiddle; return "true"; }
             if (t == "m_r") { mtype = Mtype.MouseRight; return "true"; }
             if (t == "m_r_2") { mtype = Mtype.MouseRight2; return "true"; }
+            if (t == "kb") { mtype = Mtype.Keyboard; return "true"; }
 
             return "false";
         }
 
 
-        /// <summary>
-        /// Set exclusion list
-        /// </summary>
-        /// <param name="s"></param>
-        public void set_ad(String s) {
+        public String set_kb_shortcut(String s) {
+            kb_shortcut_ctrl = false;
+            kb_shortcut_alt = false;
+            kb_shortcut_shift = false;
+            kb_shortcut_key = Keys.None;
 
+            if (String.IsNullOrWhiteSpace(s)) {
+                return "false";
+            }
 
-            if (s == null) { s = ""; }
-            s = s.Trim();
-            var ar = s.Split('\n');
+            var parts = s.Split(new[] { '+', '-' }, StringSplitOptions.RemoveEmptyEntries)
+                         .Select(x => x.Trim())
+                         .Where(x => x.Length > 0)
+                         .ToArray();
 
-            ar_ad = new List<string>();
+            foreach (var p in parts) {
+                if (p.Equals("ctrl", StringComparison.OrdinalIgnoreCase) || p.Equals("control", StringComparison.OrdinalIgnoreCase)) {
+                    kb_shortcut_ctrl = true;
+                    continue;
+                }
+                if (p.Equals("alt", StringComparison.OrdinalIgnoreCase)) {
+                    kb_shortcut_alt = true;
+                    continue;
+                }
+                if (p.Equals("shift", StringComparison.OrdinalIgnoreCase)) {
+                    kb_shortcut_shift = true;
+                    continue;
+                }
 
-            foreach (var item in ar) {
-                String s2 = item.Trim();
-                if (s2.Length > 0 && ar_ad.Contains(s2) == false) {
-                    ar_ad.Add(s2);
+                var p2 = p;
+                if (p2.Equals("esc", StringComparison.OrdinalIgnoreCase)) {
+                    p2 = "Escape";
+                }
+
+                Keys k;
+                if (Enum.TryParse(p2, true, out k)) {
+                    kb_shortcut_key = k;
                 }
             }
 
+            return (kb_shortcut_key == Keys.None) ? "false" : "true";
         }
 
 
@@ -463,11 +490,7 @@ namespace Mouse2Touch {
                 return;
             }
 
-            if (mtype == Mtype.MouseMiddle && e.Button == MouseButtons.Middle) {
-                bool_down_mm = true;
-                return;
             }
-        }
 
         /// <summary>
         /// Mouse button released
@@ -479,6 +502,75 @@ namespace Mouse2Touch {
         }
 
 
+        private void HookManager_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e) {
+            if (bool_stop) {
+                return;
+            }
+
+            if (e.KeyCode == Keys.LControlKey || e.KeyCode == Keys.RControlKey || e.KeyCode == Keys.ControlKey) {
+                kb_ctrl = true;
+                return;
+            }
+            if (e.KeyCode == Keys.LMenu || e.KeyCode == Keys.RMenu || e.KeyCode == Keys.Menu) {
+                kb_alt = true;
+                return;
+            }
+            if (e.KeyCode == Keys.LShiftKey || e.KeyCode == Keys.RShiftKey || e.KeyCode == Keys.ShiftKey) {
+                kb_shift = true;
+                return;
+            }
+
+            if (mtype != Mtype.Keyboard && !bool_keyboard_touch) {
+                return;
+            }
+
+            if (kb_shortcut_key == Keys.None) {
+                return;
+            }
+
+            if (e.KeyCode == kb_shortcut_key &&
+                kb_ctrl == kb_shortcut_ctrl &&
+                kb_alt == kb_shortcut_alt &&
+                kb_shift == kb_shortcut_shift) {
+                if (!kb_shortcut_down) {
+                    kb_shortcut_down = true;
+                    bool_keyboard_touch = !bool_keyboard_touch;
+
+                    if (bool_keyboard_touch) {
+                        mtype_before_keyboard_touch = mtype;
+                        mtype = Mtype.MouseLeft;
+                        ShowOsd("Touch mode ON", true);
+                    } else {
+                        if (mtype == Mtype.MouseLeft) {
+                            mtype = mtype_before_keyboard_touch;
+                        }
+                        ShowOsd("Touch mode OFF", false);
+                    }
+                    upFull();
+                }
+            }
+        }
+
+        private void HookManager_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e) {
+            if (e.KeyCode == Keys.LControlKey || e.KeyCode == Keys.RControlKey || e.KeyCode == Keys.ControlKey) {
+                kb_ctrl = false;
+                return;
+            }
+            if (e.KeyCode == Keys.LMenu || e.KeyCode == Keys.RMenu || e.KeyCode == Keys.Menu) {
+                kb_alt = false;
+                return;
+            }
+            if (e.KeyCode == Keys.LShiftKey || e.KeyCode == Keys.RShiftKey || e.KeyCode == Keys.ShiftKey) {
+                kb_shift = false;
+                return;
+            }
+
+            if (e.KeyCode == kb_shortcut_key) {
+                kb_shortcut_down = false;
+            }
+        }
+
+
 
         /// <summary>
         /// Called when keys are released
@@ -487,7 +579,6 @@ namespace Mouse2Touch {
             bool_down_b1 = false;
             bool_down_ml = false;
             bool_down_mr = false;
-            bool_down_mm = false;
             bool_m_handled = true; // Intercept original signal when right-clicking
         }
 
@@ -553,7 +644,11 @@ namespace Mouse2Touch {
         /// <returns></returns>
         public System.Drawing.Point getPos() {
 
-            return System.Windows.Forms.Cursor.Position;
+            if (Environment.TickCount - mouse_pos_tick > 200) {
+                return System.Windows.Forms.Cursor.Position;
+            }
+
+            return new Point(mouse_pos_x, mouse_pos_y);
         }
 
 
@@ -619,15 +714,6 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// Set touch speed
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        public String set_touch_speed(String s) {
-            return M.set_touch_speed(s);
-        }
-
-        /// <summary>
         /// Set operation type
         /// </summary>
         /// <param name="s"></param>
@@ -636,18 +722,19 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
+        /// Set keyboard shortcut used for toggle mode
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        public String set_kb_shortcut(String s) {
+            return M.set_kb_shortcut(s);
+        }
+
+        /// <summary>
         /// Hide window
         /// </summary>
         public void hide_window() {
             M.hide_window();
-        }
-
-        /// <summary>
-        /// Set exclusion list
-        /// </summary>
-        /// <param name="s"></param>
-        public void set_ad(String s) {
-            M.set_ad(s);
         }
 
         /// <summary>
