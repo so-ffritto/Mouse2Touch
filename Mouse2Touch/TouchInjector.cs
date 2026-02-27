@@ -5,7 +5,7 @@ using System.Threading;
 namespace Mouse2Touch {
 
     /// <summary>
-    /// 模擬觸控
+    /// Touch simulation ID generator
     /// </summary>
     static class IdGenerator {
         static private int _int;

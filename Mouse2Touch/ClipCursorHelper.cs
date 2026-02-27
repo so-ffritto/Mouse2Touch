@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Mouse2Touch {
 
     /// <summary>
-    /// 限制滑鼠在特定區域
+    /// Restrict mouse to a specific area
     /// </summary>
     /*class ClipCursorHelper {
     
@@ -38,7 +38,7 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 設置鼠標顯示在主屏范圍內
+        /// Set the mouse cursor to stay within the primary screen bounds
         /// </summary>
         /// <returns></returns>
         public static bool SetCursorInPrimaryScreen() {
@@ -51,7 +51,7 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 恢復鼠標顯示，可以所以屏幕的任何位置
+        /// Restore mouse movement to all screen areas
         /// </summary>
         /// <returns></returns>
         public static bool Default() {

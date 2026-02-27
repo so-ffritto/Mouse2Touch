@@ -22,45 +22,45 @@ namespace Mouse2Touch {
         }
 
 
-        public static bool bool_stop = false;//焦點的視窗在排除名單裡面，暫時停用觸控功能
-        public static bool bool_m_handled = true;//按右鍵時，攔截原本的訊號
-        public static Mtype mtype = Mtype.滑鼠側鍵;//操作類型
+        public static bool bool_stop = false; // Focused window is in exclusion list, temporarily disable touch
+        public static bool bool_m_handled = true; // Intercept original signal when right-clicking
+        public static Mtype mtype = Mtype.MouseSideButton; // Operation type
 
-        private System.Windows.Forms.NotifyIcon nIcon = new System.Windows.Forms.NotifyIcon();//右下角圖示
+        private System.Windows.Forms.NotifyIcon nIcon = new System.Windows.Forms.NotifyIcon(); // System tray icon
 
-        bool bool_exe_run = true;//程式是否在運行中
+        bool bool_exe_run = true; // Whether the program is running
         bool bool_down = false;
 
-        bool bool_down_b1 = false;//按下側鍵
-        bool bool_down_ml = false;//按下滑鼠左鍵
-        bool bool_down_mr = false;//按下滑鼠右鍵
-        bool bool_down_mm = false;//按下滑鼠中鍵
+        bool bool_down_b1 = false; // Side button pressed
+        bool bool_down_ml = false; // Left mouse button pressed
+        bool bool_down_mr = false; // Right mouse button pressed
+        bool bool_down_mm = false; // Middle mouse button pressed
 
-        bool bool_down_mr_moved = false;//按下右鍵，並且已經觸發移動
-        float f_touch_speed = 1;//觸控速度
+        bool bool_down_mr_moved = false; // Right button pressed and movement has been triggered
+        float f_touch_speed = 1; // Touch speed
 
-        List<String> ar_ad = new List<String>();//排除名單
+        List<String> ar_ad = new List<String>(); // Exclusion list
 
-        //模擬觸控用
-        Point pp = new Point();//上一次移動的位置(判斷移動距離)
-        Point pp_start = new Point();//按下的位置
+        // Touch simulation
+        Point pp = new Point(); // Last moved position (to determine move distance)
+        Point pp_start = new Point(); // Position when pressed
         PointerTouchInfo contact;
         PointerFlags oFlags;
 
 
 
         /// <summary>
-        /// 操作類型
+        /// Operation type
         /// </summary>
         public enum Mtype {
             //stop = -1,
             none = 0,
-            滑鼠側鍵 = 1,
-            滑鼠左鍵 = 2,
-            滑鼠右鍵 = 3, //長按右鍵，開啟右鍵選單
-            滑鼠右鍵_2 = 4, //原地按右鍵，開啟右鍵選單
-            滑鼠中鍵 = 5,
-            鍵盤 = 6
+            MouseSideButton = 1,
+            MouseLeft = 2,
+            MouseRight = 3, // Long press right button to open context menu
+            MouseRight2 = 4, // Click in place to open context menu
+            MouseMiddle = 5,
+            Keyboard = 6
         }
 
 
@@ -75,19 +75,34 @@ namespace Mouse2Touch {
         private void Form1_Load(object sender2, EventArgs e2) {
 
 
-            String html_path = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "main_ui.html");
+            var baseDir = System.AppDomain.CurrentDomain.BaseDirectory;
+            String html_path = Path.Combine(baseDir, "main_ui.html");
+
+            if (!File.Exists(html_path)) {
+                var candidates = new[] {
+                    Path.GetFullPath(Path.Combine(baseDir, "..", "..", "main_ui.html")),
+                    Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "main_ui.html")),
+                    Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "main_ui.html"))
+                };
+
+                var found = candidates.FirstOrDefault(File.Exists);
+                if (!String.IsNullOrEmpty(found)) {
+                    html_path = found;
+                }
+            }
+
             if (File.Exists(html_path)) {
 
                 webBrowser1.Navigate(html_path);
-                webBrowser1.ObjectForScripting = new C_js_to_net(this);//讓網頁允許存取C#
-                webBrowser1.AllowNavigation = false;//禁止載入其他網頁
-                //webBrowser1.IsWebBrowserContextMenuEnabled = false;//禁止右鍵
+                webBrowser1.ObjectForScripting = new C_js_to_net(this); // Allow web page to access C#
+                    webBrowser1.AllowNavigation = false; // Prevent loading other web pages
+                    //webBrowser1.IsWebBrowserContextMenuEnabled = false; // Disable right-click
 
             } else {
                 webBrowser1.DocumentText = $"Can't find 「{html_path}」";
             }
 
-            TouchInjector.InitializeTouchInjection();//初始化觸控API
+            TouchInjector.InitializeTouchInjection(); // Initialize touch API
 
 
             //
@@ -95,9 +110,9 @@ namespace Mouse2Touch {
             tim.Interval = 200;
             tim.Tick += (sender, e) => {
 
-                String gn = GetWindowsName.GetName();//取得目前焦點視窗的名稱
+                String gn = GetWindowsName.GetName(); // Get the name of the currently focused window
 
-                //與「排除名單」進行比對
+                // Compare with the exclusion list
                 foreach (var item in ar_ad) {
                     if (gn.IndexOf(item, StringComparison.CurrentCultureIgnoreCase) > -1) {
                         bool_stop = true;
@@ -115,7 +130,7 @@ namespace Mouse2Touch {
 
                 while (bool_exe_run) {
 
-                    if (mtype == Mtype.滑鼠右鍵_2) {
+                    if (mtype == Mtype.MouseRight2) {
 
                         bool bool_d = bool_down_mr;
 
@@ -132,33 +147,33 @@ namespace Mouse2Touch {
                             bool_down = false;
 
                             if (bool_down_mr_moved) {
-                                //模擬觸控-結束
-                                contact.PointerInfo.PointerFlags = PointerFlags.UP;
-                                TouchInjector.InjectTouchInput(1, new[] { contact });
+                                    // Touch simulation - end
+                                        contact.PointerInfo.PointerFlags = PointerFlags.UP;
+                                        TouchInjector.InjectTouchInput(1, new[] { contact });
 
-                            } else {
+                                    } else {
 
-                                RightClick();
-                            }
-                            bool_down_mr_moved = false;
-                            //upFull();
-                        } else
+                                        RightClick();
+                                    }
+                                    bool_down_mr_moved = false;
+                                    //upFull();
+                                } else
 
-                        // Touch Move Simulate
-                        if (bool_down) {
-                            var p2 = getPos();
+                                // Touch Move Simulate
+                                if (bool_down) {
+                                    var p2 = getPos();
 
-                            if (bool_down_mr_moved) {
+                                    if (bool_down_mr_moved) {
 
-                                //模擬觸控-移動
-                                int nMoveIntervalX = (int)((p2.X - pp.X) * f_touch_speed);
-                                int nMoveIntervalY = (int)((p2.Y - pp.Y) * f_touch_speed);
+                                        // Touch simulation - move
+                                        int nMoveIntervalX = (int)((p2.X - pp.X) * f_touch_speed);
+                                        int nMoveIntervalY = (int)((p2.Y - pp.Y) * f_touch_speed);
                                 contact.Move(nMoveIntervalX, nMoveIntervalY);
                                 oFlags = PointerFlags.INRANGE | PointerFlags.INCONTACT | PointerFlags.UPDATE;
                                 contact.PointerInfo.PointerFlags = oFlags;
                                 TouchInjector.InjectTouchInput(1, new[] { contact });
 
-                                //讓滑鼠跟隨觸控的位置
+                                // Make the mouse follow the touch position
                                 if (f_touch_speed != 1) {
                                     NativeMethods.SetCursorPos(pp.X + nMoveIntervalX, pp.Y + nMoveIntervalY);
                                     p2 = getPos();
@@ -166,16 +181,16 @@ namespace Mouse2Touch {
 
                                 pp = p2;
 
-                                if (overd_sc(pp)) {//超出螢幕時自動停止觸控
+                                if (overd_sc(pp)) { // Auto-stop touch when exceeding screen bounds
                                     upFull();
                                 }
 
                             } else {
 
-                                if (func_位移(pp_start, p2)) {
+                                if (HasMoved(pp_start, p2)) {
                                     bool_down_mr_moved = true;
 
-                                    //模擬觸控-開始
+                                    // Touch simulation - start
                                     contact = MakePointerTouchInfo(pp_start.X, pp_start.Y);
                                     oFlags = PointerFlags.DOWN | PointerFlags.INRANGE | PointerFlags.INCONTACT;
                                     contact.PointerInfo.PointerFlags = oFlags;
@@ -195,17 +210,17 @@ namespace Mouse2Touch {
                             bool_down = true;
                             pp = getPos();
 
-                            if (mtype == Mtype.滑鼠右鍵) {
-                                bool_m_handled = false;
-                            }
+                            if (mtype == Mtype.MouseRight) {
+                                    bool_m_handled = false;
+                                }
 
-                            //模擬觸控-開始
+                                // Touch simulation - start
                             contact = MakePointerTouchInfo(pp.X, pp.Y);
                             oFlags = PointerFlags.DOWN | PointerFlags.INRANGE | PointerFlags.INCONTACT;
                             contact.PointerInfo.PointerFlags = oFlags;
                             bool bIsSuccess = TouchInjector.InjectTouchInput(1, new[] { contact });
 
-                            if (mtype == Mtype.滑鼠右鍵) {
+                            if (mtype == Mtype.MouseRight) {
                                 Thread.Sleep(1);
                                 bool_m_handled = true;
                             }
@@ -215,13 +230,13 @@ namespace Mouse2Touch {
                         if (bool_down && (bool_d == false)) {
                             bool_down = false;
 
-                            if (mtype == Mtype.滑鼠右鍵) { bool_m_handled = false; }
+                            if (mtype == Mtype.MouseRight) { bool_m_handled = false; }
 
-                            //模擬觸控-結束
+                            // Touch simulation - end
                             contact.PointerInfo.PointerFlags = PointerFlags.UP;
                             TouchInjector.InjectTouchInput(1, new[] { contact });
 
-                            if (mtype == Mtype.滑鼠右鍵) {
+                            if (mtype == Mtype.MouseRight) {
                                 Thread.Sleep(1);
                                 bool_m_handled = true;
                             }
@@ -234,20 +249,20 @@ namespace Mouse2Touch {
                             int nMoveIntervalX = (int)((p2.X - pp.X) * f_touch_speed);
                             int nMoveIntervalY = (int)((p2.Y - pp.Y) * f_touch_speed);
 
-                            //模擬觸控-移動
+                            // Touch simulation - move
                             contact.Move(nMoveIntervalX, nMoveIntervalY);
                             oFlags = PointerFlags.INRANGE | PointerFlags.INCONTACT | PointerFlags.UPDATE;
                             contact.PointerInfo.PointerFlags = oFlags;
                             TouchInjector.InjectTouchInput(1, new[] { contact });
 
-                            //讓滑鼠跟隨觸控的位置
+                            // Make the mouse follow the touch position
                             if (f_touch_speed != 1) {
                                 NativeMethods.SetCursorPos(pp.X + nMoveIntervalX, pp.Y + nMoveIntervalY);
                                 p2 = getPos();
                             }
 
                             pp = p2;
-                            if (overd_sc(pp)) {//超出螢幕時自動停止觸控
+                            if (overd_sc(pp)) { // Auto-stop touch when exceeding screen bounds
                                 upFull();
                             }
 
@@ -277,7 +292,7 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 關閉程式時
+        /// When the program is closing
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -290,14 +305,14 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 判斷螢幕觸控點是否碰到螢幕邊緣
+        /// Check if touch point has reached screen edge
         /// </summary>
         /// <param name="p"></param>
         /// <returns></returns>
         bool overd_sc(Point p) {
 
-            //var sc = Screen.GetWorkingArea(p);//不含工作列
-            var sc = Screen.FromPoint(p).Bounds;//包含工作列
+            //var sc = Screen.GetWorkingArea(p); // Excludes taskbar
+            var sc = Screen.FromPoint(p).Bounds; // Includes taskbar
 
             if (p.X <= sc.X + 1 || p.Y <= sc.Y + 1 || (p.X >= sc.X + sc.Width - 1) || (p.Y >= sc.Y + sc.Height - 1)) {
                 return true;
@@ -308,7 +323,7 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 設定觸控速度
+        /// Set touch speed
         /// </summary>
         /// <param name="t"></param>
         /// <returns></returns>
@@ -333,18 +348,18 @@ namespace Mouse2Touch {
         /// <returns></returns>
         public String set_Mtype(String t) {
             if (t == "none") { mtype = Mtype.none; return "true"; }
-            if (t == "m_b1") { mtype = Mtype.滑鼠側鍵; return "true"; }
-            if (t == "m_l") { mtype = Mtype.滑鼠左鍵; return "true"; }
-            if (t == "m_mm") { mtype = Mtype.滑鼠中鍵; return "true"; }
-            if (t == "m_r") { mtype = Mtype.滑鼠右鍵; return "true"; }
-            if (t == "m_r_2") { mtype = Mtype.滑鼠右鍵_2; return "true"; }
+            if (t == "m_b1") { mtype = Mtype.MouseSideButton; return "true"; }
+            if (t == "m_l") { mtype = Mtype.MouseLeft; return "true"; }
+            if (t == "m_mm") { mtype = Mtype.MouseMiddle; return "true"; }
+            if (t == "m_r") { mtype = Mtype.MouseRight; return "true"; }
+            if (t == "m_r_2") { mtype = Mtype.MouseRight2; return "true"; }
 
             return "false";
         }
 
 
         /// <summary>
-        /// 設定排除名單
+        /// Set exclusion list
         /// </summary>
         /// <param name="s"></param>
         public void set_ad(String s) {
@@ -367,7 +382,7 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 取得 config
+        /// Get config
         /// </summary>
         /// <returns></returns>
         public String get_config() {
@@ -384,7 +399,7 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 設定 config
+        /// Set config
         /// </summary>
         public void set_config(String s) {
             String json_path = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "config.json");
@@ -402,15 +417,15 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 判斷滑鼠是否有移動
+        /// Check if the mouse has moved
         /// </summary>
         /// <param name="p1"></param>
         /// <param name="p2"></param>
         /// <returns></returns>
-        bool func_位移(Point p1, Point p2) {
+        bool HasMoved(Point p1, Point p2) {
             int x = Math.Abs(p1.X) - Math.Abs(p2.X);
             int y = Math.Abs(p1.Y) - Math.Abs(p2.Y);
-            bool b = (Math.Abs(x) + Math.Abs(y) >= 5);//如果兩點超過5像素就判斷有位移
+            bool b = (Math.Abs(x) + Math.Abs(y) >= 5); // If the two points are more than 5 pixels apart, consider it moved
             return b;
         }
 
@@ -418,44 +433,44 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 按下滑鼠的按鈕
+        /// Mouse button pressed
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void HookManager_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e) {
 
-            if (bool_stop) {//強制終止所有操作
+            if (bool_stop) { // Force stop all operations
                 return;
             }
 
-            if (mtype == Mtype.滑鼠側鍵 && e.Button == MouseButtons.XButton1) {
+            if (mtype == Mtype.MouseSideButton && e.Button == MouseButtons.XButton1) {
                 bool_down_b1 = true;
                 return;
             }
 
-            if (mtype == Mtype.滑鼠左鍵 && e.Button == MouseButtons.Left) {
+            if (mtype == Mtype.MouseLeft && e.Button == MouseButtons.Left) {
                 bool_down_ml = true;
                 return;
             }
 
-            if (mtype == Mtype.滑鼠右鍵 && e.Button == MouseButtons.Right) {
+            if (mtype == Mtype.MouseRight && e.Button == MouseButtons.Right) {
                 bool_down_mr = true;
                 return;
             }
 
-            if (mtype == Mtype.滑鼠右鍵_2 && e.Button == MouseButtons.Right) {
+            if (mtype == Mtype.MouseRight2 && e.Button == MouseButtons.Right) {
                 bool_down_mr = true;
                 return;
             }
 
-            if (mtype == Mtype.滑鼠中鍵 && e.Button == MouseButtons.Middle) {
+            if (mtype == Mtype.MouseMiddle && e.Button == MouseButtons.Middle) {
                 bool_down_mm = true;
                 return;
             }
         }
 
         /// <summary>
-        /// 放開滑鼠的按鈕
+        /// Mouse button released
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -466,20 +481,20 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 釋放按鍵時呼叫
+        /// Called when keys are released
         /// </summary>
         private void upFull() {
             bool_down_b1 = false;
             bool_down_ml = false;
             bool_down_mr = false;
             bool_down_mm = false;
-            bool_m_handled = true;//按右鍵時，攔截原本的訊號
+            bool_m_handled = true; // Intercept original signal when right-clicking
         }
 
 
 
         /// <summary>
-        /// 模擬點擊滑鼠右鍵。開啟右鍵選單
+        /// Simulate right mouse click. Open context menu
         /// </summary>
         private void RightClick() {
             var mt = mtype;
@@ -493,47 +508,47 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 初始化。右下角的圖示
+        /// Initialize system tray icon
         /// </summary>
         public void init_nIcon() {
 
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             nIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             nIcon.Text = "Mouse2Touch";
-            nIcon.Visible = false;//隱藏右下角圖示
+            nIcon.Visible = false; // Hide tray icon
 
             var cm = new System.Windows.Forms.ContextMenu();
             cm.MenuItems.Add("Show", new EventHandler((sender2, e2) => {
-                this.Visible = true;//顯示視窗
-                nIcon.Visible = false;//隱藏右下角圖示
+                this.Visible = true; // Show window
+                nIcon.Visible = false; // Hide tray icon
             }));
 
             cm.MenuItems.Add("Close", new EventHandler((sender2, e2) => {
-                this.Close();//關閉程式
+                this.Close(); // Close program
             }));
 
             nIcon.ContextMenu = cm;
 
             nIcon.DoubleClick += (sender, e) => {
-                this.Visible = true;//顯示視窗
-                nIcon.Visible = false;//隱藏右下角圖示
+                this.Visible = true; // Show window
+                nIcon.Visible = false; // Hide tray icon
             };
 
         }
 
 
         /// <summary>
-        /// 將程式縮小至右下角
+        /// Minimize to system tray
         /// </summary>
         public void hide_window() {
             this.Visible = false;
-            nIcon.Visible = true;//顯示右下角圖示
+            nIcon.Visible = true; // Show tray icon
         }
 
 
 
         /// <summary>
-        /// 取得目前滑鼠坐標
+        /// Get current mouse position
         /// </summary>
         /// <returns></returns>
         public System.Drawing.Point getPos() {
@@ -553,16 +568,16 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 模擬觸控移動
+        /// Create touch contact info
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
         public PointerTouchInfo MakePointerTouchInfo(int x, int y) {
 
-            uint orientation = 87;//角度
-            uint pressure = 256;//壓力
-            int radius = 1;//觸控半徑
+            uint orientation = 87; // Angle
+            uint pressure = 256; // Pressure
+            int radius = 1; // Touch radius
 
             PointerTouchInfo contact = new PointerTouchInfo();
             contact.PointerInfo.pointerType = PointerInputType.TOUCH;
@@ -604,7 +619,7 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 設定觸控速度
+        /// Set touch speed
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
@@ -613,7 +628,7 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 設定操作類型
+        /// Set operation type
         /// </summary>
         /// <param name="s"></param>
         public void set_Mtype(String s) {
@@ -621,14 +636,14 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 隱藏視窗
+        /// Hide window
         /// </summary>
         public void hide_window() {
             M.hide_window();
         }
 
         /// <summary>
-        /// 設定排除名單
+        /// Set exclusion list
         /// </summary>
         /// <param name="s"></param>
         public void set_ad(String s) {
@@ -636,7 +651,7 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 讀取設定檔
+        /// Read config file
         /// </summary>
         /// <returns></returns>
         public String get_config() {
@@ -644,7 +659,7 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 儲存設定檔
+        /// Save config file
         /// </summary>
         /// <param name="s"></param>
         public void set_config(String s) {
@@ -652,16 +667,16 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 開啟網址
+        /// Open URL
         /// </summary>
         /// <param name="url"></param>
         public void open_url(String url) {
-            //呼叫系統預設的瀏覽器 
+            // Open in system default browser
             System.Diagnostics.Process.Start(url);
         }
 
         /// <summary>
-        /// 列印文字，用於debug
+        /// Print text, used for debugging
         /// </summary>
         /// <param name="s"></param>
         public void print(String s) {

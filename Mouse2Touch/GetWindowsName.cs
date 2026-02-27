@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 namespace Mouse2Touch {
 
     /// <summary>
-    /// 取得焦點視窗的「名稱」
+    /// Get the name of the focused window
     /// </summary>
     public class GetWindowsName {
 
 
         [DllImport("User32.dll")]
-        private static extern IntPtr GetForegroundWindow();//取得目前焦點視窗的IntPtr
+        private static extern IntPtr GetForegroundWindow(); // Get the IntPtr of the currently focused window
 
         [DllImport("user32.dll")]
-        static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);//取視窗title
+        static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count); // Get window title
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetWindowThreadProcessId(IntPtr hWnd, out uint ProcessId);
@@ -60,7 +60,7 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 取得焦點視窗的「視窗標題」
+        /// Get the window title of the focused window
         /// </summary>
         /// <returns></returns>
         public static String GetTopWindowText() {
@@ -73,7 +73,7 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 取得焦點視窗的「完整路徑」
+        /// Get the full path of the focused window
         /// </summary>
         public static String GetTopWindowName() {
             IntPtr hWnd = GetForegroundWindow();
@@ -83,7 +83,7 @@ namespace Mouse2Touch {
             IntPtr hProcess = OpenProcess(0x0410, false, lpdwProcessId);
 
             StringBuilder text = new StringBuilder(10000);
-            //GetModuleBaseName(hProcess, IntPtr.Zero, text, text.Capacity);//會亂碼
+            //GetModuleBaseName(hProcess, IntPtr.Zero, text, text.Capacity); // May produce garbled text
             GetModuleFileNameEx(hProcess, IntPtr.Zero, text, text.Capacity);
 
             CloseHandle(hProcess);
@@ -93,14 +93,14 @@ namespace Mouse2Touch {
 
 
         /// <summary>
-        /// 取得焦點視窗的「名稱」
+        /// Get the name of the focused window
         /// </summary>
         /// <returns></returns>
         public static String GetName() {
             String path = GetTopWindowName();
             String name = Path.GetFileName(path);
 
-            //因為取法取得UWP程式的名稱，所以UWP改成取得視窗標題
+            // Cannot get the name of UWP apps, so use window title instead for UWP
             if (name == "ApplicationFrameHost.exe") {
                 return Path.GetFileName(GetTopWindowText());
             } else {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Mouse2Touch {
 
     /// <summary>
-    /// 滑鼠模擬
+    /// Mouse simulation
     /// </summary>
     class NativeMethods {
 
@@ -30,22 +30,22 @@ namespace Mouse2Touch {
 
 
 
-        #region 滑鼠模擬
+        #region Mouse Simulation
 
         /// <summary>
-        /// 模擬壓住滑鼠左鍵。
+        /// Simulate left mouse button press.
         /// </summary>
         public static void LeftDown() {
             NativeMethods.mouse_event(NativeContansts.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
         }
         /// <summary>
-        /// 模擬釋放滑鼠左鍵。
+        /// Simulate left mouse button release.
         /// </summary>
         public static void LeftUp() {
             NativeMethods.mouse_event(NativeContansts.MOUSEEVENTF_LEFTUP, 0, 0, 0, IntPtr.Zero);
         }
         /// <summary>
-        /// 模擬點擊滑鼠左鍵。
+        /// Simulate left mouse button click.
         /// </summary>
         public static void LeftClick() {
             LeftDown();
@@ -53,19 +53,19 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 模擬壓住滑鼠右鍵。
+        /// Simulate right mouse button press.
         /// </summary>
         public static void RightDown() {
             NativeMethods.mouse_event(NativeContansts.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, IntPtr.Zero);
         }
         /// <summary>
-        /// 模擬釋放滑鼠右鍵。
+        /// Simulate right mouse button release.
         /// </summary>
         public static void RightUp() {
             NativeMethods.mouse_event(NativeContansts.MOUSEEVENTF_RIGHTUP, 0, 0, 0, IntPtr.Zero);
         }
         /// <summary>
-        /// 模擬點擊滑鼠右鍵。
+        /// Simulate right mouse button click.
         /// </summary>
         public static void RightClick() {
             RightDown();
@@ -73,19 +73,19 @@ namespace Mouse2Touch {
         }
 
         /// <summary>
-        /// 模擬壓住滑鼠中鍵。
+        /// Simulate middle mouse button press.
         /// </summary>
         public static void MiddleDown() {
             NativeMethods.mouse_event(NativeContansts.MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, IntPtr.Zero);
         }
         /// <summary>
-        /// 模擬釋放滑鼠中鍵。
+        /// Simulate middle mouse button release.
         /// </summary>
         public static void MiddleUp() {
             NativeMethods.mouse_event(NativeContansts.MOUSEEVENTF_MIDDLEUP, 0, 0, 0, IntPtr.Zero);
         }
         /// <summary>
-        /// 模擬點擊滑鼠中鍵。
+        /// Simulate middle mouse button click.
         /// </summary>
         public static void MiddleClick() {
             MiddleDown();
@@ -101,23 +101,23 @@ namespace Mouse2Touch {
 
     public class NativeContansts {
 
-        //滑鼠左鍵
+        // Left mouse button
         public static int MOUSEEVENTF_LEFTDOWN = 0x0002;
         public static int MOUSEEVENTF_LEFTUP = 0x0004;
 
-        //滑鼠右鍵
+        // Right mouse button
         public static int MOUSEEVENTF_RIGHTDOWN = 0x0008;
         public static int MOUSEEVENTF_RIGHTUP = 0x0010;
 
-        //滑鼠中鍵
+        // Middle mouse button
         public static int MOUSEEVENTF_MIDDLEDOWN = 0x0020;
         public static int MOUSEEVENTF_MIDDLEUP = 0x0040;
 
-        //滑鼠側鍵
+        // Side mouse button
         public static int MOUSEEVENTF_XDOWN = 0x0080;
         public static int MOUSEEVENTF_XUP = 0x0100;
 
-        //滾輪
+        // Scroll wheel
         public static int MOUSEEVENTF_WHEEL = 0x0800;
         public static int MOUSEEVENTF_HWHEEL = 0x01000;
 

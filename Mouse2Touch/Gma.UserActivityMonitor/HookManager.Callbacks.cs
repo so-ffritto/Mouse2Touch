@@ -126,7 +126,7 @@ namespace Gma.UserActivityMonitor {
 
 
 
-                    //滑鼠中鍵
+                    // Middle mouse button
                     case WM_MBUTTONDOWN:
                         mouseDown = true;
                         button = MouseButtons.Middle;
@@ -138,7 +138,7 @@ namespace Gma.UserActivityMonitor {
                         clickCount = 1;
                         break;
 
-                    //滑鼠側鍵
+                    // Side mouse button
                     case WM_XBUTTONDOWN:
                         mouseDown = true;
                         button = MouseButtons.XButton1;
@@ -239,23 +239,23 @@ namespace Gma.UserActivityMonitor {
                     System.Console.WriteLine($"wParam:{wParam} type:{((mouseDown)?"down":"up")}  button:{button}  bool_m_handled:{Mouse2Touch.Form1.bool_m_handled}");
                 }*/
 
-                if (Mouse2Touch.Form1.bool_stop == false) {//強制終止所有操作
+                if (Mouse2Touch.Form1.bool_stop == false) { // Force stop all operations
 
 
-                    //事件攔截
-                    if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.滑鼠側鍵 && button == MouseButtons.XButton1) {
+                    // Event interception
+                    if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseSideButton && button == MouseButtons.XButton1) {
                         return -1;
 
-                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.滑鼠右鍵 && button == MouseButtons.Right && Mouse2Touch.Form1.bool_m_handled) {
+                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseRight && button == MouseButtons.Right && Mouse2Touch.Form1.bool_m_handled) {
                         return -1;
 
-                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.滑鼠右鍵_2 && button == MouseButtons.Right) {
+                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseRight2 && button == MouseButtons.Right) {
                         return -1;
 
-                        /*} else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.滑鼠左鍵 && button == MouseButtons.Left && Mouse2Touch.Form1.bool_m_handled) {
+                        /*} else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseLeft && button == MouseButtons.Left && Mouse2Touch.Form1.bool_m_handled) {
                             return -1;*/
 
-                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.滑鼠中鍵 && button == MouseButtons.Middle) {
+                    } else if (Mouse2Touch.Form1.mtype == Mouse2Touch.Form1.Mtype.MouseMiddle && button == MouseButtons.Middle) {
                         return -1;
 
                     }

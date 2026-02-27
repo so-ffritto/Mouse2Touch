@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- saved from url=(0014)about:internet -->
 
 <html>
@@ -8,9 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>Mouse2Touch UI</title>
-
-    <!--用於切換語言-->
-    <style id="style_lang"></style>
 
     <style>
         html,
@@ -23,7 +20,7 @@
         input,
         button,
         body {
-            font-family: "微軟正黑體", "Microsoft JhengHei", "黑體-繁", "蘋果儷中黑", "sans-serif";
+            font-family: "Segoe UI", "sans-serif";
         }
 
         .main_page {
@@ -52,8 +49,6 @@
             padding-left: 38px;
             box-sizing: border-box;
             position: relative;
-            /* border-bottom: 1px solid rgba(0, 0, 0, 0.1); */
-            /* min-height: 40px; */
             line-height: 20px;
             cursor: pointer;
             padding-top: 9px;
@@ -122,7 +117,6 @@
         }
 
         .card_r {
-            /* float: right; */
             position: absolute;
             top: 0px;
             right: 0px;
@@ -169,7 +163,6 @@
 
         .card_l_title {
             line-height: 24px;
-            /* min-height: 40px; */
             margin-left: 15px;
             padding-top: 10px;
             box-sizing: border-box;
@@ -182,7 +175,6 @@
 
         .card_l_txt {
             line-height: 20px;
-            /* min-height: 30px; */
             margin-left: 15px;
             color: rgb(128, 167, 152);
             margin-right: 110px;
@@ -210,44 +202,6 @@
 
 
 
-    <style>
-        .lang_box {
-            width: 100%; 
-            overflow:auto;
-            padding:10px 0px;
-        }
-
-            .lang_box .lang_box_item {
-                text-align: center;
-                width: 33%;
-                float: left;
-                min-width:100px;
-            }
-
-        .lang_box_but {
-     
-            margin:5px 0px;
-            line-height: 25px;
-
-            padding: 6px 30px;
-            display: inline-block;
-            border-radius: 20px;
-            cursor: pointer;
-            border: 1px solid rgba(0, 0, 0, 0);
-        }
-
-        .lang_box_but:hover {
-            border: 1px solid rgb(71, 138, 226);
-        }
-
-            .lang_box_but[lang_but_sel=true] {
-                box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
-                background-color: #FFF;
-            }
-    </style>
-
-
-
     <script>
 
 
@@ -256,10 +210,10 @@
         }
 
         var net = window.external;
-        var touch_speed = 1;//觸控速度
-        var Mtype = 'm_r_2';//none 、 m_b1 、 m_l 、 m_mm 、 m_r 、 m_r_2
-        var ad_list = '3D/blender/Maya/Unreal/Photoshop'.replace(/[/]/ig, '\n');//過濾名單
-        var lang = 'tw';//語言
+        var touch_speed = 1;
+        var Mtype = 'm_r_2'; // none, m_b1, m_l, m_mm, m_r, m_r_2
+        var ad_list = '3D/blender/Maya/Unreal/Photoshop'.replace(/[/]/ig, '\n'); // Exclusion list
+        var lang = 'en';
         var bool_save = false;
 
 
@@ -277,7 +231,6 @@
                 } catch (e) { }
             }
 
-            set_lang(lang);
             net.set_touch_speed(touch_speed);
             net.set_Mtype(Mtype);
             net.set_ad(ad_list);
@@ -310,12 +263,12 @@
             var t = getId('text_touch_speed').value;
             touch_speed = t;
             net.set_touch_speed(t);
-            save_config();//儲存設定
+            save_config();
         }
         function set_Mtype(x) {
             Mtype = x;
             net.set_Mtype(x);
-            save_config();//儲存設定
+            save_config();
         }
         function hide_window() {
             net.hide_window();
@@ -324,13 +277,13 @@
             var t = getId('text_ad').value;
             ad_list = t;
             net.set_ad(t);
-            save_config();//儲存設定
+            save_config();
         }
 
 
         function save_config() {
 
-            //避免初始化完成前，就儲存設定值
+            // Prevent saving before initialization is complete
             if (bool_save == false) {
                 return;
             }
@@ -345,42 +298,9 @@
             net.set_config(s);
         }
 
-        /**
-         * 設定語言
-         * @param s
-         */
-        function set_lang(s) {
-
-            lang = s;
-
-            getId('but_en').setAttribute('lang_but_sel', '');
-            getId('but_tw').setAttribute('lang_but_sel', '');
-            getId('but_jp').setAttribute('lang_but_sel', '');
-
-            var css = '';
-            if (s == 'en') {
-                css = '*[lg="tw"] , *[lg="jp"] { display:none }';
-                getId('but_en').setAttribute('lang_but_sel', 'true');
-
-            } else if (s == 'jp') {
-                css = '*[lg="en"] , *[lg="tw"] { display:none }';
-                getId('but_jp').setAttribute('lang_but_sel', 'true');
-
-            } else {
-                css = '*[lg="en"] , *[lg="jp"] { display:none }';
-                getId('but_tw').setAttribute('lang_but_sel', 'true');
-
-            }
-
-            getId('style_lang').innerHTML = css;
-
-            save_config();//儲存設定
-        }
-
-
 
         function open_github() {
-            net.open_url('https://github.com/hbl917070/Mouse2Touch');
+            net.open_url('https://github.com/so-ffritto/Mouse2Touch');
         }
 
     </script>
@@ -395,80 +315,44 @@
 
         <div style="margin-top: -5px;"></div>
 
-        <div class="card_title">
-            <span lg="en">Mode</span>
-            <span lg="tw">模式</span>
-            <span lg="jp">モード</span>
-        </div>
+        <div class="card_title">Mode</div>
         <div class="card_box">
 
             <div class="radio_item">
                 <input type="radio" id="c_1_r1" name="c_1">
-                <label for="c_1_r1" onclick="set_Mtype('none')">
-                    <span lg="en">Not enabled</span>
-                    <span lg="tw">不啟用</span>
-                    <span lg="jp">なし</span>
-                </label>
+                <label for="c_1_r1" onclick="set_Mtype('none')">Not enabled</label>
             </div>
 
             <div class="radio_item">
                 <input type="radio" id="c_1_r2" name="c_1">
-                <label for="c_1_r2" onclick="set_Mtype('m_b1')">
-                    <span lg="en">Mouse side button -> Touch</span>
-                    <span lg="tw">滑鼠側鍵 -> 觸控</span>
-                    <span lg="jp">マウスサイドボタン -> タッチ </span>
-                </label>
+                <label for="c_1_r2" onclick="set_Mtype('m_b1')">Mouse side button -> Touch</label>
             </div>
 
             <div class="radio_item">
                 <input type="radio" id="c_1_r3" name="c_1">
-                <label for="c_1_r3" onclick="set_Mtype('m_mm')">
-                    <span lg="en">Middle mouse button -> Touch</span>
-                    <span lg="tw">滑鼠中鍵 -> 觸控</span>
-                    <span lg="jp">マウス中央ボタン -> タッチ </span>
-                </label>
+                <label for="c_1_r3" onclick="set_Mtype('m_mm')">Middle mouse button -> Touch</label>
             </div>
 
-            <!--此選項有BUG未解決-->
+            <!-- This option has an unresolved bug -->
             <div class="radio_item" style="display:none">
                 <input type="radio" id="c_1_r4" name="c_1">
-                <label for="c_1_r4" onclick="set_Mtype('m_r')">
-                    <span lg="en">Right mouse button -> Touch (Long press to open Context Menu)</span>
-                    <span lg="tw">滑鼠右鍵 -> 觸控 (長按開啟右鍵選單)</span>
-                    <span lg="jp">マウスの「右クリック」 -> タッチ (長押ししてコンテキストメニューを開きます)</span>
-                </label>
+                <label for="c_1_r4" onclick="set_Mtype('m_r')">Right mouse button -> Touch (Long press to open Context Menu)</label>
             </div>
 
             <div class="radio_item">
                 <input type="radio" id="c_1_r5" name="c_1">
-                <label for="c_1_r5" onclick="set_Mtype('m_r_2')">
-                    <span lg="en">Right mouse button -> Touch (Click on the place to open the Context Menu)</span>
-                    <span lg="tw">滑鼠右鍵 -> 觸控 (原地點擊開啟右鍵選單)</span>
-                    <span lg="jp">マウスの「右クリック」 -> タッチ (場所をクリックしてコンテキストメニューを開きます)</span>
-                </label>
+                <label for="c_1_r5" onclick="set_Mtype('m_r_2')">Right mouse button -> Touch (Click in place to open Context Menu)</label>
             </div>
         </div>
 
 
 
-        <div class="card_title">
-            <span lg="en">Other </span>
-            <span lg="tw">其他 </span>
-            <span lg="jp">追加オプション </span>
-        </div>
+        <div class="card_title">Other</div>
         <div class="card_box">
             <div class="card_item">
                 <div class="card_l">
-                    <div class="card_l_title">
-                        <span lg="en">Touch speed </span>
-                        <span lg="tw">觸控速度 </span>
-                        <span lg="jp">タッチ速度 </span>
-                    </div>
-                    <div class="card_l_txt">
-                        <span lg="en"> Allowable range 1.0 ~ 5.0 (multiple) </span>
-                        <span lg="tw"> 可設定 1.0 ~ 5.0 (倍) </span>
-                        <span lg="jp"> 許容範囲 1.0 ~ 5.0 (倍) </span>
-                    </div>
+                    <div class="card_l_title">Touch speed</div>
+                    <div class="card_l_txt">Allowable range 1.0 ~ 5.0 (multiple)</div>
                 </div>
                 <div class="card_r">
                     <input type="text" id="text_touch_speed" onkeyup="set_touch_speed()">
@@ -477,53 +361,22 @@
 
             <div class="card_item">
                 <div class="card_l">
-                    <div class="card_l_title">
-                        <span lg="en"> Hidden program </span>
-                        <span lg="tw"> 隱藏程式 </span>
-                        <span lg="jp"> プログラムを隠す </span>
-                    </div>
-                    <div class="card_l_txt">
-                        <span lg="en"> Hidden to the bottom right of the taskbar </span>
-                        <span lg="tw"> 縮小至工作列右下角 </span>
-                        <span lg="jp"> タスクバーの右下に非表示 </span>
-                    </div>
+                    <div class="card_l_title">Hide program</div>
+                    <div class="card_l_txt">Hidden to the bottom right of the taskbar</div>
                 </div>
                 <div class="card_r">
-                    <button onclick="hide_window()">
-                        <span lg="en"> Hide </span>
-                        <span lg="tw"> 隱藏 </span>
-                        <span lg="jp"> 隠す </span>
-                    </button>
+                    <button onclick="hide_window()">Hide</button>
                 </div>
             </div>
 
             <div class="card_item">
 
-                <div class="card_l_title">
-
-                    <span lg="en"> Exclusion list </span>
-                    <span lg="tw"> 排除名單 </span>
-                    <span lg="jp"> 除外リスト </span>
-                </div>
+                <div class="card_l_title">Exclusion list</div>
                 <div class="card_l_txt card_full">
-
-
-                    <span lg="en">
-                        When you use these programs, Mouse2Touch will stop working. <br>
-                        Just enter Part of the name. <br>
-                        One line represents one. <br>
-                        case-insensitive.
-                    </span>
-                    <span lg="tw">
-                        Mouse2Touch 不會在這些程式下作用。<br>
-                        輸入局部名稱即可 、 一行一個 、 無視大小寫
-                    </span>
-                    <span lg="jp">
-                        これらのプログラムを使用する場合、Mouse2Touch は動作を停止します <br>
-                        機能するには「名前の一部」を入力してください<br>
-                        1本の線は1本を表します <br>
-                        大文字小文字を区別しない
-                    </span>
+                    When you use these programs, Mouse2Touch will stop working. <br>
+                    Just enter part of the name. <br>
+                    One line represents one entry. <br>
+                    Case-insensitive.
                 </div>
                 <div class="text_ad_box">
                     <textarea id="text_ad" name="" cols="30" rows="10" onfocusout="set_ad()"></textarea>
@@ -536,11 +389,7 @@
 
 
 
-        <div class="card_title">
-            <span lg="en">About</span>
-            <span lg="tw">關於</span>
-            <span lg="jp">について</span>
-        </div>
+        <div class="card_title">About</div>
         <div class="card_box">
             <div class="card_item">
                 <div class="card_l">
@@ -562,32 +411,19 @@
                         GitHub
                     </div>
                     <div class="card_l_txt">
-                        Mouse2Touch
-                        <span lg="en"> Source code</span>
-                        <span lg="tw"> 原始碼</span>
-                        <span lg="jp"> ソースコード</span>
+                        Mouse2Touch Source code
                     </div>
                 </div>
                 <div class="card_r">
-                    <button onclick="open_github()">
-                        <span lg="en"> Open </span>
-                        <span lg="tw"> 查看 </span>
-                        <span lg="jp"> オンにする </span>
-                    </button>
+                    <button onclick="open_github()">Open</button>
                 </div>
             </div>
 
             <div class="card_item">
                 <div class="card_l">
-                    <div class="card_l_title">
-                        <span lg="en"> Author </span>
-                        <span lg="tw"> 作者 </span>
-                        <span lg="jp"> 作者 </span>
-                    </div>
+                    <div class="card_l_title">Author</div>
                     <div class="card_l_txt">
-                        hbl917070 (深海異音)<br>
-                        Email : hbl917070@gmail.com <br>
-                        巴哈姆特 : https://home.gamer.com.tw/hbl917070
+                        so-ffritto
                     </div>
                 </div>
                 <div class="card_r">
@@ -597,40 +433,28 @@
 
             <div class="card_item">
                 <div class="card_l">
-                    <div class="card_l_title">
-                        <span lg="en"> Introduction </span>
-                        <span lg="tw"> 說明 </span>
-                        <span lg="jp"> 説明 </span>
+                    <div class="card_l_title">Forked from</div>
+                    <div class="card_l_txt">
+                        GitHub: <a href="#" onclick="net.open_url('https://github.com/hbl917070/Mouse2Touch'); return false;">github.com/hbl917070/Mouse2Touch</a>
                     </div>
-                    <div class="card_l_txt card_full">
-                        <div lg="en">
-                            Turn specific mouse button into touch mode.
-                            <div style="height:15px"></div>
-                            Some programs running as the system administrator will cause the program to be useless. Run
-                            Mouse2Touch as the system administrator to solve this problem.
-                            <div style="height:15px"></div>
-                            Because the mouse is also moving during the touch process, this will cause some few programs
-                            to be unable to drag in the touch mode. <br>
-                            ex: Office 2016 OneNote
-                        </div>
-                        <div lg="tw">
-                            讓滑鼠特定按鍵變成觸控模式，增加控制的靈活性。
-                            <div style="height:15px"></div>
-                            某些以系統管理員身份執行的程式會導致程式失去作用， 用系統管理員身份執行 Mouse2Touch 即可解決此問題。
-                            <div style="height:15px"></div>
-                            因為觸控過程中滑鼠也在移動，這將導致某些少數的程式無法以觸控模式進行拖曳作業。<br>
-                            例如：Office 2016 OneNote
-                        </div>
-                        <div lg="jp">
-                            特定のマウスボタンをタッチモードに変更する。
-                            <div style="height:15px"></div>
-                            システム管理者として実行されるプログラムは、 Mouse2Touch を操作不能にします。
-                            この問題を解決するには、システム管理者としてmouse2Touchを実行してください。
-                            <div style="height:15px"></div>
-                            タッチプロセス中にマウスも動いているため、一部のプログラムはタッチでドラッグできません。<br>
-                            例：Office 2016 OneNote
-                        </div>
+                </div>
+                <div class="card_r">
 
+                </div>
+            </div>
+
+            <div class="card_item">
+                <div class="card_l">
+                    <div class="card_l_title">Introduction</div>
+                    <div class="card_l_txt card_full">
+                        Turn specific mouse button into touch mode.
+                        <div style="height:15px"></div>
+                        Some programs running as the system administrator will cause the program to be useless. Run
+                        Mouse2Touch as the system administrator to solve this problem.
+                        <div style="height:15px"></div>
+                        Because the mouse is also moving during the touch process, this will cause some few programs
+                        to be unable to drag in the touch mode. <br>
+                        ex: Office 2016 OneNote
                     </div>
                 </div>
 
@@ -642,14 +466,6 @@
         <div class="card_title">
             <div style="height:30px"></div>
         </div>
-
-       
-
-            <div class="lang_box">
-                <div class="lang_box_item"> <div class="lang_box_but" id="but_en" onclick="set_lang('en')">English</div> </div>
-                <div class="lang_box_item"> <div class="lang_box_but" id="but_tw" onclick="set_lang('tw')">中文</div> </div>
-                <div class="lang_box_item"> <div class="lang_box_but" id="but_jp" onclick="set_lang('jp')">日文</div> </div>
-            </div>
 
 
         <div style="height:60px"></div>

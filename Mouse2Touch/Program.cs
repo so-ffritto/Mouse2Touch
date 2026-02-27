@@ -7,12 +7,12 @@ using System.Windows.Forms;
 namespace Mouse2Touch {
     static class Program {
         /// <summary>
-        /// 應用程式的主要進入點。
+        /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main() {
 
-            //避免重複執行
+            // Prevent duplicate execution
             string ProcessName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
             var p = System.Diagnostics.Process.GetProcessesByName(ProcessName);
             if (p.Length > 1) {

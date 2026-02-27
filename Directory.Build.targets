@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Target Name="CopyMouse2TouchUiHtmlToOutput" AfterTargets="Build" Condition="'$(MSBuildProjectName)' == 'Mouse2Touch'">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\main_ui.html"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>
